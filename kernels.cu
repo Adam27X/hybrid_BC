@@ -57,27 +57,7 @@ std::vector<float> bc_gpu(graph g, std::vector< std::vector<int> > &d_gpu_v, std
 	checkCudaErrors(cudaMemcpy(next_source_d,next_source,sizeof(int),cudaMemcpyHostToDevice));
 
 	//Launch kernel
-	pthread_t thread;
-	if(op.nvml)
-	{
-		start_power_sample(op,thread,10);
-	}
 	bc_gpu_opt<<<dimGrid,dimBlock>>>(bc_d,R_d,C_d,F_d,g.n,g.m,d_d,sigma_d,delta_d,Q_d,Q2_d,S_d,endpoints_d,next_source_d,pitch_d,pitch_sigma,pitch_delta,pitch_Q,pitch_Q2,pitch_S,pitch_endpoints,0,g.n,jia_d,diameters_d);
-	if(op.nvml)
-	{
-		float avg_power = end_power_sample(op,thread);
-		if(op.power_file == NULL)
-		{
-			std::cout << "Average power: " << avg_power << std::endl;
-		}
-		else
-		{
-			std::ofstream ofs;
-			ofs.open(op.power_file, std::ios::app);
-			ofs << "Average power: " << avg_power << std::endl;
-			ofs.close();
-		}
-	}
 	checkCudaErrors(cudaPeekAtLastError());
 
 	//Transfer result to CPU
@@ -153,8 +133,6 @@ __device__ void bitonic_sort(int *values, int N)
 }
 
 
-#define ALPHA 768 //Threshold for determining magnitude of change
-#define BETA 512 //Threshold for choosing between processor utilization vs work efficiency
 __global__ void bc_gpu_opt(float *bc, const int *R, const int *C, const int *F, const int n, const int m, int *d, unsigned long long *sigma, float *delta, int *Q, int *Q2, int *S, int *endpoints, int *next_source, size_t pitch_d, size_t pitch_sigma, size_t pitch_delta, size_t pitch_Q, size_t pitch_Q2, size_t pitch_S, size_t pitch_endpoints, int start, int end, int *jia, int *diameters)
 {
 	__shared__ int i;
@@ -209,7 +187,6 @@ __global__ void bc_gpu_opt(float *bc, const int *R, const int *C, const int *F, 
 	        __shared__ int current_depth; 
 		__shared__ int endpoints_len;
 		__shared__ bool sp_calc_done;
-		clock_t current_time;
 
 		if(j == 0)
 		{
@@ -223,12 +200,10 @@ __global__ void bc_gpu_opt(float *bc, const int *R, const int *C, const int *F, 
 			endpoints_len = 2;
 			current_depth = 0;
 			sp_calc_done = false;
-			current_time = 0;
 		}
 		__syncthreads();
 
 		//Do first iteration separately since we already know the edges to traverse
-		current_time = clock64();
 		for(int r=threadIdx.x+R[i]; r<R[i+1]; r+=blockDim.x)
 		{
 			int w = C[r];
@@ -267,8 +242,8 @@ __global__ void bc_gpu_opt(float *bc, const int *R, const int *C, const int *F, 
 				Q2_len = 0;
 				current_depth++;
 			}
-			__syncthreads();
 		}
+		__syncthreads();
 
 		while(!sp_calc_done)
 		{

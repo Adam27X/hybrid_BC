@@ -5,7 +5,7 @@ program_CXX_OBJS := ${program_CXX_SRCS:.cpp=.o}
 program_CU_SRCS := $(wildcard *.cu)
 program_CU_OBJS := ${program_CU_SRCS:.cu=.o}
 program_INCLUDE_DIRS := .
-program_LIBRARIES := pthread nvidia-ml 
+program_LIBRARIES := 
 CPPFLAGS += $(foreach includedir,$(program_INCLUDE_DIRS),-I$(includedir))
 CXXFLAGS += -g -O3 -std=c++0x -Wall -pedantic #-Werror
 LDADD += $(foreach library,$(program_LIBRARIES),-l$(library))
@@ -33,6 +33,6 @@ $(BC): $(program_CXX_OBJS) $(program_CU_SRCS)
 	nvcc $(NVFLAGS) $(CPPFLAGS) $(LDFLAGS) $(program_CU_SRCS) $(program_CXX_OBJS) $(LDADD) -o $(BC)
 
 clean:
-	@- $(RM) $(BC) $(program_CXX_OBJS) $(program_CU_OBJS) *~ scripts/*~
+	@- $(RM) $(BC) $(program_CXX_OBJS) $(program_CU_OBJS) *~ 
 
 distclean: clean

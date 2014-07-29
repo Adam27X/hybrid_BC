@@ -10,10 +10,8 @@ int main(int argc, char *argv[])
 {
 	program_options op = parse_arguments(argc,argv);
 	int max_threads_per_block, number_of_SMs;
-	if(!op.multi)
-	{
-		choose_device(max_threads_per_block,number_of_SMs,op);
-	}
+	choose_device(max_threads_per_block,number_of_SMs,op);
+	
 	graph g = parse_edgelist(op.infile);
 
 	std::cout << "Number of nodes: " << g.n << std::endl;
