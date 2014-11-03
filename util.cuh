@@ -7,7 +7,7 @@
 #include <cmath>
 #include <getopt.h>
 
-#include "edgelist_to_csr.h"
+#include "parse.h"
 
 // This will output the proper CUDA error strings in the event that a CUDA host call returns an error
 #ifndef checkCudaErrors

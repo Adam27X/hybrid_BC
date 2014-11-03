@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <iostream>
 
-#include "edgelist_to_csr.h"
+#include "parse.h"
 #include "util.cuh"
 
 __device__ void bitonic_sort(int *values, int N);

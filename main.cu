@@ -1,7 +1,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "edgelist_to_csr.h"
+#include "parse.h"
 #include "sequential.h"
 #include "util.cuh"
 #include "kernels.cuh"
@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 	int max_threads_per_block, number_of_SMs;
 	choose_device(max_threads_per_block,number_of_SMs,op);
 	
-	graph g = parse_edgelist(op.infile);
+	graph g = parse(op.infile);
 
 	std::cout << "Number of nodes: " << g.n << std::endl;
 	std::cout << "Number of edges: " << g.m << std::endl;
