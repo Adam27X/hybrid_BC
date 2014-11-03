@@ -3,7 +3,7 @@ hybrid_BC
 
 Hybrid methods for Parallel Betweenness Centrality on the GPU
 
-The only dependency of this code (other than CUDA itself, of course) is Boost. A few small input examples can be found in the graphs directory. Graphs should be represented as edgelists with one edge per line.
+The only dependency of this code (other than CUDA itself, of course) is Boost. A few small input examples can be found in the graphs directory. Both DIMACS and SNAP graph formats are accepted (assuming unweighted graphs). Some small examples are in the graphs directory.
 
 Example command line to run and time the algorithm:
 $ ./bc -i ./graphs/breast_coexpress.txt
