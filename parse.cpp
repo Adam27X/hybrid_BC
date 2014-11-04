@@ -142,7 +142,7 @@ graph parse_edgelist(char *file)
 	std::vector<std::string> to;
 	while(std::getline(edgelist,line))
 	{
-		if(line[0] == '%') //Allow comments
+		if((line[0] == '%') || (line[0] == '#')) //Allow comments
 		{
 			continue;
 		}
