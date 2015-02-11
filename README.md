@@ -3,7 +3,7 @@ hybrid_BC
 
 Hybrid methods for Parallel Betweenness Centrality on the GPU
 
-The only dependency of this code (other than CUDA itself, of course) is Boost. A few small input examples can be found in the graphs directory. Both DIMACS and SNAP graph formats are accepted (assuming unweighted, undirected graphs). Some small examples are in the graphs directory.
+The only dependency of this code (other than CUDA itself, of course) is Boost. A few small input examples can be found in the graphs directory. Both DIMACS and SNAP graph formats are accepted (assuming unweighted, undirected graphs). DIMACS files are assumed to end in the ".graph" extension whereas SNAP (edgelist) files are assumed to end in either ".txt" or ".edge" extensions. 
 
 Example command line to run and time the algorithm:
 $ ./bc -i ./graphs/breast_coexpress.txt
