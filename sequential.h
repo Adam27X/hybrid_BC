@@ -3,9 +3,11 @@
 
 #include <stack>
 #include <queue>
+#include <vector>
+#include <set>
 
 #include "parse.h"
 
-std::vector<float> bc_cpu(graph g, std::vector< std::vector<int> > &d_cpu, std::vector< std::vector<unsigned long long> > &sigma_cpu);
+std::vector<float> bc_cpu(graph g, const std::set<int> &source_vertices);
 
 #endif

@@ -14,7 +14,8 @@ $ ./bc -i ./graphs/breast_coexpress.txt -v
 To print BC scores to a file:
 $ ./bc -i ./graphs/breast_coexpress.txt --printscores=output.txt
 
-For more information on the algorithms used in this repository, see our SC14 paper: http://users.ece.gatech.edu/~amclaughlin7/SC14_Final.pdf
+If you use the algorithms in this repository for your own research, please cite our SC14 paper using the following BibTeX entry: http://users.ece.gatech.edu/~amclaughlin7/bibtex/SC14.txt
+More information on the algorithms used in this repository can be found in the paper itself: http://users.ece.gatech.edu/~amclaughlin7/SC14_Final.pdf
 
 Adam McLaughlin
 Adam27X@gatech.edu

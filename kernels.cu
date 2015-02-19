@@ -3,7 +3,7 @@
 #define DIAMETER_SAMPLES 512
 
 //For portability reasons, we will not use CUDA 6 features here.
-std::vector<float> bc_gpu(graph g, std::vector< std::vector<int> > &d_gpu_v, std::vector< std::vector<unsigned long long> > &sigma_gpu_v, int max_threads_per_block, int number_of_SMs, program_options op)
+std::vector<float> bc_gpu(graph g, int max_threads_per_block, int number_of_SMs, program_options op, const std::set<int> &source_vertices)
 {
 	//Host result data
 	float *bc_gpu = new float[g.n];
@@ -45,6 +45,12 @@ std::vector<float> bc_gpu(graph g, std::vector< std::vector<int> > &d_gpu_v, std
 
 	checkCudaErrors(cudaMalloc((void**)&next_source_d,sizeof(int)));
 
+	thrust::device_vector<int> source_vertices_d(source_vertices.size());
+	if(op.approx)
+	{
+		thrust::copy(source_vertices.begin(),source_vertices.end(),source_vertices_d.begin());
+	}
+
 	checkCudaErrors(cudaMalloc((void**)&jia_d,sizeof(int)));
 	checkCudaErrors(cudaMalloc((void**)&diameters_d,sizeof(int)*DIAMETER_SAMPLES));
 	checkCudaErrors(cudaMemset(jia_d,0,sizeof(int)));
@@ -57,8 +63,17 @@ std::vector<float> bc_gpu(graph g, std::vector< std::vector<int> > &d_gpu_v, std
 	checkCudaErrors(cudaMemcpy(next_source_d,next_source,sizeof(int),cudaMemcpyHostToDevice));
 
 	//Launch kernel
-	bc_gpu_opt<<<dimGrid,dimBlock>>>(bc_d,R_d,C_d,F_d,g.n,g.m,d_d,sigma_d,delta_d,Q_d,Q2_d,S_d,endpoints_d,next_source_d,pitch_d,pitch_sigma,pitch_delta,pitch_Q,pitch_Q2,pitch_S,pitch_endpoints,0,g.n,jia_d,diameters_d);
-	checkCudaErrors(cudaPeekAtLastError());
+	if(op.approx)
+	{
+
+		bc_gpu_opt<<<dimGrid,dimBlock>>>(bc_d,R_d,C_d,F_d,g.n,g.m,d_d,sigma_d,delta_d,Q_d,Q2_d,S_d,endpoints_d,next_source_d,pitch_d,pitch_sigma,pitch_delta,pitch_Q,pitch_Q2,pitch_S,pitch_endpoints,0,op.k,jia_d,diameters_d,thrust::raw_pointer_cast(source_vertices_d.data()),true);
+		checkCudaErrors(cudaPeekAtLastError());
+	}
+	else
+	{
+		bc_gpu_opt<<<dimGrid,dimBlock>>>(bc_d,R_d,C_d,F_d,g.n,g.m,d_d,sigma_d,delta_d,Q_d,Q2_d,S_d,endpoints_d,next_source_d,pitch_d,pitch_sigma,pitch_delta,pitch_Q,pitch_Q2,pitch_S,pitch_endpoints,0,g.n,jia_d,diameters_d,thrust::raw_pointer_cast(source_vertices_d.data()),false);
+		checkCudaErrors(cudaPeekAtLastError());
+	}
 
 	//Transfer result to CPU
 	checkCudaErrors(cudaMemcpy(bc_gpu,bc_d,sizeof(float)*g.n,cudaMemcpyDeviceToHost));
@@ -132,9 +147,9 @@ __device__ void bitonic_sort(int *values, int N)
 	}
 }
 
-
-__global__ void bc_gpu_opt(float *bc, const int *R, const int *C, const int *F, const int n, const int m, int *d, unsigned long long *sigma, float *delta, int *Q, int *Q2, int *S, int *endpoints, int *next_source, size_t pitch_d, size_t pitch_sigma, size_t pitch_delta, size_t pitch_Q, size_t pitch_Q2, size_t pitch_S, size_t pitch_endpoints, int start, int end, int *jia, int *diameters)
+__global__ void bc_gpu_opt(float *bc, const int *R, const int *C, const int *F, const int n, const int m, int *d, unsigned long long *sigma, float *delta, int *Q, int *Q2, int *S, int *endpoints, int *next_source, size_t pitch_d, size_t pitch_sigma, size_t pitch_delta, size_t pitch_Q, size_t pitch_Q2, size_t pitch_S, size_t pitch_endpoints, int start, int end, int *jia, int *diameters, int *source_vertices, bool approx)
 {
+	__shared__ int ind;
 	__shared__ int i;
 	int j = threadIdx.x;
 	int *d_row = (int*)((char*)d + blockIdx.x*pitch_d);
@@ -147,21 +162,35 @@ __global__ void bc_gpu_opt(float *bc, const int *R, const int *C, const int *F, 
 
 	if(j == 0)
 	{
-		i = blockIdx.x + start;
-		Q_row = (int*)((char*)Q + blockIdx.x*pitch_Q);
-		Q2_row = (int*)((char*)Q2 + blockIdx.x*pitch_Q2);
-		S_row = (int*)((char*)S + blockIdx.x*pitch_S);
-		endpoints_row = (int*)((char*)endpoints + blockIdx.x*pitch_endpoints);
-		*jia = 0;
+		if(approx)
+		{
+			ind = blockIdx.x + start;
+			i = source_vertices[ind];
+			Q_row = (int*)((char*)Q + blockIdx.x*pitch_Q);
+			Q2_row = (int*)((char*)Q2 + blockIdx.x*pitch_Q2);
+			S_row = (int*)((char*)S + blockIdx.x*pitch_S);
+			endpoints_row = (int*)((char*)endpoints + blockIdx.x*pitch_endpoints);
+			*jia = 0;
+		}
+		else
+		{
+			ind = blockIdx.x + start;
+			i = ind;
+			Q_row = (int*)((char*)Q + blockIdx.x*pitch_Q);
+			Q2_row = (int*)((char*)Q2 + blockIdx.x*pitch_Q2);
+			S_row = (int*)((char*)S + blockIdx.x*pitch_S);
+			endpoints_row = (int*)((char*)endpoints + blockIdx.x*pitch_endpoints);
+			*jia = 0;
+		}
 	}
 	__syncthreads();
-	if((i==0) && (j < DIAMETER_SAMPLES))
+	if((ind==0) && (j < DIAMETER_SAMPLES))
 	{
 		diameters[j] = INT_MAX;
 	}
 	__syncthreads();
 
-	while(i < end)
+	while(ind < end)
 	{
 		//Initialization
 		for(int k=threadIdx.x; k<n; k+=blockDim.x)
@@ -328,9 +357,9 @@ __global__ void bc_gpu_opt(float *bc, const int *R, const int *C, const int *F, 
 		if(j == 0)
 		{
 			current_depth = d_row[S_row[S_len-1]] - 1;
-			if(i<DIAMETER_SAMPLES)
+			if(ind<DIAMETER_SAMPLES)
 			{
-				diameters[i] = current_depth+1;
+				diameters[ind] = current_depth+1;
 			}
 		}
 		__syncthreads();
@@ -388,11 +417,19 @@ __global__ void bc_gpu_opt(float *bc, const int *R, const int *C, const int *F, 
 		
 		if(j == 0)
 		{
-			i = atomicAdd(next_source,1);
+			ind = atomicAdd(next_source,1);
+			if(approx)
+			{
+				i = source_vertices[ind];
+			}
+			else
+			{
+				i = ind;
+			}
 		}
 		__syncthreads();
 
-		if(i == 2*DIAMETER_SAMPLES) //Might want to play around with this number. Safe to assume that they are done by now? Probably...
+		if(ind == 2*DIAMETER_SAMPLES) //Might want to play around with this number. Safe to assume that they are done by now? Probably...
 		{
 			__shared__ int diameter_keys[DIAMETER_SAMPLES];
 			for(int kk = threadIdx.x; kk<DIAMETER_SAMPLES; kk+=blockDim.x)

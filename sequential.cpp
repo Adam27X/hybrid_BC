@@ -1,11 +1,14 @@
 #include "sequential.h"
 
-std::vector<float> bc_cpu(graph g, std::vector< std::vector<int> > &d_cpu, std::vector< std::vector<unsigned long long> > &sigma_cpu)
+std::vector<float> bc_cpu(graph g, const std::set<int> &source_vertices)
 {
 	std::vector<float> bc(g.n,0);
+	int end = source_vertices.empty() ? g.n : source_vertices.size();
+	std::set<int>::iterator it = source_vertices.begin();
 
-	for(int i=0; i<g.n; i++)
+	for(int k=0; k<end; k++)
 	{
+		int i = source_vertices.empty() ? k : *it++;
 		std::queue<int> Q;
 		std::stack<int> S;
 		std::vector<int> d(g.n,INT_MAX);

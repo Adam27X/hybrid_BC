@@ -28,13 +28,15 @@ inline void __checkCudaErrors(cudaError_t err, const char *file, const int line)
 class program_options
 {
 public:
-	program_options() : infile(NULL), verify(false), printBCscores(false), scorefile(NULL), device(-1) {}
+	program_options() : infile(NULL), verify(false), printBCscores(false), scorefile(NULL), device(-1), approx(false), k(256) {}
 
 	char *infile;
 	bool verify;
 	bool printBCscores;
 	char *scorefile;
 	int device;
+	bool approx;
+	int k;
 };
 program_options parse_arguments(int argc, char *argv[]);
 
