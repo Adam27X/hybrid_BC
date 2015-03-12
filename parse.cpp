@@ -64,7 +64,11 @@ graph parse_metis(char *file)
 		std::vector<std::string> splitvec;
 		boost::split(splitvec,line, boost::is_any_of(" \t"), boost::token_compress_on); //Now tokenize
 
-                //If the last element is a space or tab itself, erase it
+                //If the first or last element is a space or tab itself, erase it
+		if(!splitvec.empty() && !is_number(splitvec[0]))
+		{
+			splitvec.erase(splitvec.begin());
+		}
                 if(!is_number(splitvec[splitvec.size()-1]))
                 {
                         splitvec.erase(splitvec.end()-1);
