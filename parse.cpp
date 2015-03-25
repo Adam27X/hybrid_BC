@@ -69,7 +69,7 @@ graph parse_metis(char *file)
 		{
 			splitvec.erase(splitvec.begin());
 		}
-                if(!is_number(splitvec[splitvec.size()-1]))
+                if(!splitvec.empty() && !is_number(splitvec[splitvec.size()-1]))
                 {
                         splitvec.erase(splitvec.end()-1);
                 }
