@@ -17,9 +17,11 @@ To print BC scores to a file:
 
 $ ./bc -i ./graphs/breast_coexpress.txt --printscores=output.txt
 
-If you use the algorithms in this repository for your own research, please cite our SC14 paper using the following BibTeX entry: http://users.ece.gatech.edu/~amclaughlin7/bibtex/SC14.txt
+If you use the algorithms in this repository for your own research, please cite our SC14 paper: https://dl.acm.org/citation.cfm?id=2683656
 
-More information on the algorithms used in this repository can be found in the paper itself: http://users.ece.gatech.edu/~amclaughlin7/SC14_Final.pdf
+More information on the algorithms used in this repository can be found in the paper itself: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.728.2926&rep=rep1&type=pdf
+
+Additionally, this work was featured as a research highlight in the August issue of Communications of the ACM! https://cacm.acm.org/magazines/2018/8/229768-accelerating-gpu-betweenness-centrality/fulltext
 
 Adam McLaughlin
 
